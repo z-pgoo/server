@@ -40,3 +40,5 @@ out/
 ### Mac File
 .DS_Store
 /src/.DS_Store
+
+/src/main/resources/datasource.properties
