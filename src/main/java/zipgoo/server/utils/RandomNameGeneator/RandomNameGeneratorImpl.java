@@ -10,13 +10,17 @@ import java.util.Random;
 
 @Slf4j
 public class RandomNameGeneratorImpl implements RandomNameGeneratorUtil {
+    public static final String ANIMAL_FILE_URL = "/Users/dlwnsgus07/Desktop/Project/server/src/main/java/zipgoo/server/utils/RandomNameGeneator/animalName.json";
+    public static final String ADJECTIVE_FILE_URL = "";
     static Integer MAX_ANIMAL_COUNT = 41495;
+    JSONObject adjectiveObj;
     JSONObject animalObj;
     JSONParser parser = new JSONParser();
 
     public RandomNameGeneratorImpl() {
         try {
-            FileReader reader = new FileReader("/Users/dlwnsgus07/Desktop/Project/server/src/main/java/zipgoo/server/utils/RandomNameGeneator/animalName.json");
+            FileReader reader = new FileReader(ANIMAL_FILE_URL);
+//            FileReader reader = new FileReader(ADJECTIVE_FILE_URL);
             animalObj = (JSONObject) parser.parse(reader);
         } catch (IOException | ParseException e) {
             log.error(e.getMessage());
@@ -24,7 +28,6 @@ public class RandomNameGeneratorImpl implements RandomNameGeneratorUtil {
     }
     /**
      * 형용사를 바탕으로 랜덤으로 가져옴
-     *
      * @return 형용사
      */
     @Override
@@ -35,7 +38,6 @@ public class RandomNameGeneratorImpl implements RandomNameGeneratorUtil {
     /**
      * 동물이름에서 하나를 뽑아서 가져옴
      * index 0 ~ 41495
-     *
      * @return 동물이름
      */
     @Override
