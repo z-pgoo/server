@@ -1,4 +1,4 @@
-package zipgoo.server.utils.RandomNameGeneator;
+package zipgoo.server.utils.RandomNameGenerator;
 
 import org.springframework.stereotype.Component;
 
