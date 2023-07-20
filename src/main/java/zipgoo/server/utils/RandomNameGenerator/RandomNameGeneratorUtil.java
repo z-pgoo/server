@@ -6,5 +6,6 @@ import org.springframework.stereotype.Component;
 public interface RandomNameGeneratorUtil {
     public String getFirstName();
     public String getSecondName();
+    public String getFullName();
 
 }
