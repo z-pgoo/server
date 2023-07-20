@@ -11,9 +11,9 @@ import java.util.Random;
 @Slf4j
 public class RandomNameGeneratorImpl implements RandomNameGeneratorUtil {
     public static final String ANIMAL_FILE_URL = "/Users/dlwnsgus07/Desktop/Project/server/src/main/java/zipgoo/server/utils/RandomNameGeneator/animalName.json";
-    public static final String ADJECTIVE_FILE_URL = "";
+    public static final String ADJECTIVE_FILE_URL = "/Users/dlwnsgus07/Desktop/Project/server/src/main/java/zipgoo/server/utils/RandomNameGeneator/adjectiveName.json";
     static Integer MAX_ANIMAL_COUNT = 41495;
-    static Integer MAX_ADJECTIVE_COUNT = 0;
+    static Integer MAX_ADJECTIVE_COUNT = 43;
     JSONObject adjectiveObj;
     JSONObject animalObj;
     JSONParser parser = new JSONParser();
