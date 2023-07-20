@@ -13,15 +13,17 @@ public class RandomNameGeneratorImpl implements RandomNameGeneratorUtil {
     public static final String ANIMAL_FILE_URL = "/Users/dlwnsgus07/Desktop/Project/server/src/main/java/zipgoo/server/utils/RandomNameGeneator/animalName.json";
     public static final String ADJECTIVE_FILE_URL = "";
     static Integer MAX_ANIMAL_COUNT = 41495;
+    static Integer MAX_ADJECTIVE_COUNT = 0;
     JSONObject adjectiveObj;
     JSONObject animalObj;
     JSONParser parser = new JSONParser();
 
     public RandomNameGeneratorImpl() {
         try {
-            FileReader reader = new FileReader(ANIMAL_FILE_URL);
-//            FileReader reader = new FileReader(ADJECTIVE_FILE_URL);
-            animalObj = (JSONObject) parser.parse(reader);
+            FileReader animalReader = new FileReader(ANIMAL_FILE_URL);
+            FileReader reader = new FileReader(ADJECTIVE_FILE_URL);
+            animalObj = (JSONObject) parser.parse(animalReader);
+            adjectiveObj = (JSONObject) parser.parse(reader);
         } catch (IOException | ParseException e) {
             log.error(e.getMessage());
         }
@@ -32,7 +34,9 @@ public class RandomNameGeneratorImpl implements RandomNameGeneratorUtil {
      */
     @Override
     public String getFirstName() {
-        return "test";
+        Random random = new Random();
+        int randNum = random.nextInt(MAX_ADJECTIVE_COUNT);
+        return (String)adjectiveObj.get(String.valueOf(randNum));
     }
 
     /**
@@ -44,7 +48,6 @@ public class RandomNameGeneratorImpl implements RandomNameGeneratorUtil {
     public String getSecondName() {
         Random random = new Random();
         int randNum = random.nextInt(MAX_ANIMAL_COUNT);
-        log.info("test value : {}", randNum);
         return (String)animalObj.get(String.valueOf(randNum));
     }
 }
