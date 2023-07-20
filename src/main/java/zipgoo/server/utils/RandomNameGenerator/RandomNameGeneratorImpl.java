@@ -1,4 +1,4 @@
-package zipgoo.server.utils.RandomNameGeneator;
+package zipgoo.server.utils.RandomNameGenerator;
 
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -10,8 +10,8 @@ import java.util.Random;
 
 @Slf4j
 public class RandomNameGeneratorImpl implements RandomNameGeneratorUtil {
-    public static final String ANIMAL_FILE_URL = "/Users/dlwnsgus07/Desktop/Project/server/src/main/java/zipgoo/server/utils/RandomNameGeneator/animalName.json";
-    public static final String ADJECTIVE_FILE_URL = "/Users/dlwnsgus07/Desktop/Project/server/src/main/java/zipgoo/server/utils/RandomNameGeneator/adjectiveName.json";
+    public static final String ANIMAL_FILE_URL = "/Users/dlwnsgus07/Desktop/Project/server/src/main/java/zipgoo/server/utils/RandomNameGenerator/animalName.json";
+    public static final String ADJECTIVE_FILE_URL = "/Users/dlwnsgus07/Desktop/Project/server/src/main/java/zipgoo/server/utils/RandomNameGenerator/adjectiveName.json";
     static Integer MAX_ANIMAL_COUNT = 41495;
     static Integer MAX_ADJECTIVE_COUNT = 43;
     JSONObject adjectiveObj;
