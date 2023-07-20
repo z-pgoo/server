@@ -50,4 +50,13 @@ public class RandomNameGeneratorImpl implements RandomNameGeneratorUtil {
         int randNum = random.nextInt(MAX_ANIMAL_COUNT);
         return (String)animalObj.get(String.valueOf(randNum));
     }
+
+    /**
+     * 전체 이름 합하기
+     * @return 형용사 + 공백 + 동물이름
+     */
+    @Override
+    public String getFullName() {
+        return getFirstName() + " " + getSecondName();
+    }
 }
