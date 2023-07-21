@@ -1,5 +1,8 @@
 spring:
   profiles:
+    include: "datasource"
+spring:
+  profiles:
     group:
       "local" : "local, jwt, oauth"
     active : local
