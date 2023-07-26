@@ -1,6 +1,7 @@
 package zipgoo.server.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import zipgoo.server.domain.SocialType;
 import zipgoo.server.domain.User;
 
@@ -11,4 +12,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByNickname(String nickname);
     Optional<User> findByRefreshToken(String refreshToken);
     Optional<User> findBySocialTypeAndSocialId(SocialType socialType, String socialId);
+
+    @Query("SELECT MAX(id) FROM User")
+    Long findMaxUserId();
 }

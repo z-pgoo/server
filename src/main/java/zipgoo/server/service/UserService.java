@@ -36,4 +36,11 @@ public class UserService {
         user.passwordEncode(passwordEncoder);
         userRepository.save(user);
     }
+
+    public void ssignUp(String nickname) throws Exception{
+        if(userRepository.findByNickname(nickname).isPresent()){
+            throw new Exception("이미 존재하는 닉네임입니다.");
+        }
+        userRepository.findMaxUserId();
+    }
 }

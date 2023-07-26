@@ -1,5 +1,8 @@
 package zipgoo.server.jwt;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import lombok.RequiredArgsConstructor;
 import zipgoo.server.domain.User;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +20,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * Jwt 인증 필터
@@ -42,17 +46,30 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
     private GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
 
+    /**
+
+     *** 프론트단에서 토큰을 보냈을 때 가장 먼저 실행되는 부분이 doFilterInternal ***
+
+     1. 액세스 토큰을 보낸 경우
+     먼저 토큰이 유효한지 판단한다.
+     1-1. 만약 액세스 토큰이 만료됐을 경우에는 DB에 이메일로 접근해서 리프레시 토큰을 통해 액세스 토큰을 재발급한다.
+     1-2. 만약 토큰이 유효한 경우에는 로그인 상태를 계속 유지해준다.
+
+     2. 리프레시 토큰을 보낸 경우(1-1의 경우라고 볼 수 있다)
+     이 경우는 액세스 토큰이 만료되어 액세스 토큰을 요청한 경우가 해당된다. 리프레시 토큰의 유효성을 검사한다.
+     2-1. 만료된 경우에는 리프레시 토큰과 액세스 토큰을 모두 재발급해서 서버에 리프레시토큰 업데이트, 프론트단에는 액세스 토큰을 보내준다.
+     2-2. 만료되지 않은 경우에는 액세스 토큰 재발급해서 프론트단에 보내준다. 만약 리프레시 토큰이 일정 시간(예를 들면 2일?)밖에 안 남은 경우에도 재발급해줄 수 있다.
+
+     **/
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (request.getRequestURI().equals(NO_CHECK_URL)) {
-            filterChain.doFilter(request, response); // "/login" 요청이 들어오면, 다음 필터 호출
-            return; // return으로 이후 현재 필터 진행 막기 (안해주면 아래로 내려가서 계속 필터 진행시킴)
-        }
+        log.info("doFilterInternal() 호출");
 
         // 사용자 요청 헤더에서 RefreshToken 추출
         // -> RefreshToken이 없거나 유효하지 않다면(DB에 저장된 RefreshToken과 다르다면) null을 반환
         // 사용자의 요청 헤더에 RefreshToken이 있는 경우는, AccessToken이 만료되어 요청한 경우밖에 없다.
         // 따라서, 위의 경우를 제외하면 추출한 refreshToken은 모두 null
+
         String refreshToken = jwtService.extractRefreshToken(request)
                 .filter(jwtService::isTokenValid)
                 .orElse(null);
@@ -60,6 +77,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
         // 리프레시 토큰이 요청 헤더에 존재했다면, 사용자가 AccessToken이 만료되어서
         // RefreshToken까지 보낸 것이므로 리프레시 토큰이 DB의 리프레시 토큰과 일치하는지 판단 후,
         // 일치한다면 AccessToken을 재발급해준다.
+
         if (refreshToken != null) {
             checkRefreshTokenAndReIssueAccessToken(response, refreshToken);
             return; // RefreshToken을 보낸 경우에는 AccessToken을 재발급 하고 인증 처리는 하지 않게 하기위해 바로 return으로 필터 진행 막기
@@ -81,11 +99,14 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
      *  그 후 JwtService.sendAccessTokenAndRefreshToken()으로 응답 헤더에 보내기
      */
     public void checkRefreshTokenAndReIssueAccessToken(HttpServletResponse response, String refreshToken) {
+        log.info("checkRefreshTokenAndReIssueAccessToken() 호출");
         userRepository.findByRefreshToken(refreshToken)
                 .ifPresent(user -> {
-                    String reIssuedRefreshToken = reIssueRefreshToken(user);
-                    jwtService.sendAccessAndRefreshToken(response, jwtService.createAccessToken(user.getEmail()),
-                            reIssuedRefreshToken);
+                    reIssueRefreshToken(user);
+                    // 리프레시 토큰이 DB에 있는지 확인하고, 만약에 있다면 리프레시 토큰 재발급해서 DB에 넣는다.
+
+                    // 그 다음에 액세스 토큰을 다시 만들고, 프론트단에 액세스토큰을 보내준다. 만약 리프레시 토큰도 받고 싶으면 담아서 보내면 될듯?
+                    jwtService.sendAccessToken(response, jwtService.createAccessToken(user.getEmail()));
                 });
     }
 
@@ -95,6 +116,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
      * DB에 재발급한 리프레시 토큰 업데이트 후 Flush
      */
     private String reIssueRefreshToken(User user) {
+        log.info("reIssueRefreshToken() 호출");
         String reIssuedRefreshToken = jwtService.createRefreshToken();
         user.updateRefreshToken(reIssuedRefreshToken);
         userRepository.saveAndFlush(user);
@@ -112,11 +134,42 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
     public void checkAccessTokenAndAuthentication(HttpServletRequest request, HttpServletResponse response,
                                                   FilterChain filterChain) throws ServletException, IOException {
         log.info("checkAccessTokenAndAuthentication() 호출");
-        jwtService.extractAccessToken(request)
-                .filter(jwtService::isTokenValid)
-                .ifPresent(accessToken -> jwtService.extractEmail(accessToken)
-                        .ifPresent(email -> userRepository.findByEmail(email)
-                                .ifPresent(this::saveAuthentication)));
+
+        // 여기서 액세스 토큰이 유효한 경우에는 말 그대로 로그인 유지.
+        // 아닌 경우에는 두 가지 Exception 처리를 해준다.
+        // 1. ExpiredJwtException인 경우에는 기간이 만료된 토큰이므로, 리프레시 토큰으로 접근해서 액세스 토큰을 재발급 받는다.
+        // 2. Exception인 경우에는 잘못된 토큰이므로, Exception을 넘긴다.
+        String accessToken = jwtService.extractAccessToken(request).orElse(null);
+        try {
+            JWT.require(Algorithm.HMAC512(jwtService.getSecretKey())).build().verify(accessToken);
+            jwtService.extractAccessToken(request)
+                    .filter(jwtService::isTokenValid)
+                    .ifPresent(accessToken1 -> jwtService.extractEmail(accessToken1)
+                            .ifPresent(email -> userRepository.findByEmail(email)
+                                    .ifPresent(this::saveAuthentication)));
+            log.info("만료되지 않은 올바른 액세스 토큰입니다.");
+
+        }
+        catch(TokenExpiredException e){
+            log.info("액세스 토큰이 만료되었습니다. message : {}", e.getMessage());
+            String email = String.valueOf(jwtService.extractEmail(accessToken).orElse(null));
+            Optional<User> user = userRepository.findByEmail(email);
+
+            if(email == null || user == null){
+                log.info("이메일 정보가 올바르지 않습니다.");
+            }
+            else{
+                String newAccessToken = jwtService.createAccessToken(email);
+                log.info("액세스 토큰을 새로 발급했습니다.");
+                jwtService.sendAccessToken(response, newAccessToken);
+            }
+
+        }
+        catch(Exception e){
+            log.info("액세스 토큰이 잘못되었습니다. message : {}", e.getMessage());
+        }
+
+
 
         filterChain.doFilter(request, response);
     }
@@ -137,6 +190,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
      * setAuthentication()을 이용하여 위에서 만든 Authentication 객체에 대한 인증 허가 처리
      */
     public void saveAuthentication(User myUser) {
+        log.info("saveAuthentication() 호출");
         String password = myUser.getPassword();
         if (password == null) { // 소셜 로그인 유저의 비밀번호 임의로 설정 하여 소셜 로그인 유저도 인증 되도록 설정
             password = PasswordUtil.generateRandomPassword();
@@ -154,5 +208,6 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
-}
 
+
+}

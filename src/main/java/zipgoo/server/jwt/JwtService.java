@@ -2,11 +2,15 @@ package zipgoo.server.jwt;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import zipgoo.server.domain.User;
 import zipgoo.server.repository.UserRepository;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +50,7 @@ public class JwtService {
      */
     public String createAccessToken(String email) {
         Date now = new Date();
+        log.info("createAccessToken");
         return JWT.create() // JWT 토큰을 생성하는 빌더 반환
                 .withSubject(ACCESS_TOKEN_SUBJECT) // JWT의 Subject 지정 -> AccessToken이므로 AccessToken
                 .withExpiresAt(new Date(now.getTime() + accessTokenExpirationPeriod)) // 토큰 만료 시간 설정
@@ -63,6 +68,7 @@ public class JwtService {
      */
     public String createRefreshToken() {
         Date now = new Date();
+        log.info("createRefreshToken");
         return JWT.create()
                 .withSubject(REFRESH_TOKEN_SUBJECT)
                 .withExpiresAt(new Date(now.getTime() + refreshTokenExpirationPeriod))
@@ -74,6 +80,7 @@ public class JwtService {
      */
     public void sendAccessToken(HttpServletResponse response, String accessToken) {
         response.setStatus(HttpServletResponse.SC_OK);
+        log.info("sendAccessToken");
 
         response.setHeader(accessHeader, accessToken);
         log.info("재발급된 Access Token : {}", accessToken);
@@ -88,6 +95,7 @@ public class JwtService {
         setAccessTokenHeader(response, accessToken);
         setRefreshTokenHeader(response, refreshToken);
         log.info("Access Token, Refresh Token 헤더 설정 완료");
+
     }
 
     /**
@@ -96,6 +104,7 @@ public class JwtService {
      * 헤더를 가져온 후 "Bearer"를 삭제(""로 replace)
      */
     public Optional<String> extractRefreshToken(HttpServletRequest request) {
+        log.info("extractRefreshToken");
         return Optional.ofNullable(request.getHeader(refreshHeader))
                 .filter(refreshToken -> refreshToken.startsWith(BEARER))
                 .map(refreshToken -> refreshToken.replace(BEARER, ""));
@@ -107,6 +116,7 @@ public class JwtService {
      * 헤더를 가져온 후 "Bearer"를 삭제(""로 replace)
      */
     public Optional<String> extractAccessToken(HttpServletRequest request) {
+        log.info("extractAccessToken");
         return Optional.ofNullable(request.getHeader(accessHeader))
                 .filter(refreshToken -> refreshToken.startsWith(BEARER))
                 .map(refreshToken -> refreshToken.replace(BEARER, ""));
@@ -120,6 +130,7 @@ public class JwtService {
      * 유효하지 않다면 빈 Optional 객체 반환
      */
     public Optional<String> extractEmail(String accessToken) {
+        log.info("extractEmail");
         try {
             // 토큰 유효성 검사하는 데에 사용할 알고리즘이 있는 JWT verifier builder 반환
             return Optional.ofNullable(JWT.require(Algorithm.HMAC512(secretKey))
@@ -148,23 +159,38 @@ public class JwtService {
     }
 
     /**
-     * RefreshToken DB 저장(업데이트)
+     * RefreshToken DB 저장
      */
     public void updateRefreshToken(String email, String refreshToken) {
-        userRepository.findByEmail(email)
-                .ifPresentOrElse(
-                        user -> user.updateRefreshToken(refreshToken),
-                        () -> new Exception("일치하는 회원이 없습니다.")
-                );
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("일치하는 회원이 없습니다."));
+        user.updateRefreshToken(refreshToken);
+        userRepository.saveAndFlush(user);
+
     }
 
     public boolean isTokenValid(String token) {
         try {
             JWT.require(Algorithm.HMAC512(secretKey)).build().verify(token);
             return true;
-        } catch (Exception e) {
+        } catch (TokenExpiredException e) {
+            log.error("기간이 만료된 토큰입니다. {}", e.getMessage());
+            return false;
+        } catch (Exception e){
             log.error("유효하지 않은 토큰입니다. {}", e.getMessage());
             return false;
         }
     }
+
+    public boolean isLoggedIn() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // 인증 정보가 존재하면 사용자는 로그인 상태로 간주
+        return authentication != null && authentication.isAuthenticated();
+    }
+
+    public void logout() {
+        SecurityContextHolder.clearContext(); // 인증 정보 제거하여 로그아웃 처리
+    }
+
 }

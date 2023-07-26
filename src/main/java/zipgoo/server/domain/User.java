@@ -6,6 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import javax.persistence.*;
 
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Builder
