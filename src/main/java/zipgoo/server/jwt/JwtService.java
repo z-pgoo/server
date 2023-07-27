@@ -33,32 +33,27 @@ public class JwtService {
     private Long refreshTokenExpirationPeriod;
 
     @Value("${spring.jwt.access.header}")
-    private String accessHeader;
+    public String accessHeader;
 
     @Value("${spring.jwt.refresh.header}")
-    private String refreshHeader;
+    public String refreshHeader;
 
-    private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
-    private static final String REFRESH_TOKEN_SUBJECT = "RefreshToken";
-    private static final String EMAIL_CLAIM = "email";
-    private static final String BEARER = "Bearer ";
+    public static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
+    public static final String REFRESH_TOKEN_SUBJECT = "RefreshToken";
+    public static final String EMAIL_CLAIM = "email";
+    public static final String BEARER = "Bearer ";
 
     private final UserRepository userRepository;
 
     /**
      * AccessToken 생성 메소드
      */
-    public String createAccessToken(String email) {
+    public String createAccessToken() {
         Date now = new Date();
         log.info("createAccessToken");
         return JWT.create() // JWT 토큰을 생성하는 빌더 반환
                 .withSubject(ACCESS_TOKEN_SUBJECT) // JWT의 Subject 지정 -> AccessToken이므로 AccessToken
                 .withExpiresAt(new Date(now.getTime() + accessTokenExpirationPeriod)) // 토큰 만료 시간 설정
-
-                //클레임으로는 저희는 email 하나만 사용합니다.
-                //추가적으로 식별자나, 이름 등의 정보를 더 추가하셔도 됩니다.
-                //추가하실 경우 .withClaim(클래임 이름, 클래임 값) 으로 설정해주시면 됩니다
-                .withClaim(EMAIL_CLAIM, email)
                 .sign(Algorithm.HMAC512(secretKey)); // HMAC512 알고리즘 사용, application-jwt.yml에서 지정한 secret 키로 암호화
     }
 
@@ -168,19 +163,6 @@ public class JwtService {
         user.updateRefreshToken(refreshToken);
         userRepository.saveAndFlush(user);
 
-    }
-
-    public boolean isTokenValid(String token) {
-        try {
-            JWT.require(Algorithm.HMAC512(secretKey)).build().verify(token);
-            return true;
-        } catch (TokenExpiredException e) {
-            log.error("기간이 만료된 토큰입니다. {}", e.getMessage());
-            return false;
-        } catch (Exception e){
-            log.error("유효하지 않은 토큰입니다. {}", e.getMessage());
-            return false;
-        }
     }
 
 
