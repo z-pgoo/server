@@ -14,9 +14,6 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
-import zipgoo.server.filter.CustomJsonUsernamePasswordAuthenticationFilter;
-import zipgoo.server.handler.LoginFailureHandler;
-import zipgoo.server.handler.LoginSuccessHandler;
 import zipgoo.server.jwt.JwtAuthenticationProcessingFilter;
 import zipgoo.server.jwt.JwtService;
 import zipgoo.server.oauth2.handler.OAuth2LoginFailureHandler;
@@ -67,11 +64,6 @@ public class SecurityConfig {
                 .failureHandler(oAuth2LoginFailureHandler) // 소셜 로그인 실패 시 핸들러 설정
                 .userInfoEndpoint().userService(customOAuth2UserService); // customUserService 설정
 
-        // 원래 스프링 시큐리티 필터 순서가 LogoutFilter 이후에 로그인 필터 동작
-        // 따라서, LogoutFilter 이후에 우리가 만든 필터 동작하도록 설정
-        // 순서 : LogoutFilter -> JwtAuthenticationProcessingFilter -> CustomJsonUsernamePasswordAuthenticationFilter
-        http.addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class);
-        http.addFilterBefore(jwtAuthenticationProcessingFilter(), CustomJsonUsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -97,37 +89,6 @@ public class SecurityConfig {
         return new ProviderManager(provider);
     }
 
-    /**
-     * 로그인 성공 시 호출되는 LoginSuccessJWTProviderHandler 빈 등록
-     */
-    @Bean
-    public LoginSuccessHandler loginSuccessHandler() {
-        return new LoginSuccessHandler(jwtService, userRepository);
-    }
-
-    /**
-     * 로그인 실패 시 호출되는 LoginFailureHandler 빈 등록
-     */
-    @Bean
-    public LoginFailureHandler loginFailureHandler() {
-        return new LoginFailureHandler();
-    }
-
-    /**
-     * CustomJsonUsernamePasswordAuthenticationFilter 빈 등록
-     * 커스텀 필터를 사용하기 위해 만든 커스텀 필터를 Bean으로 등록
-     * setAuthenticationManager(authenticationManager())로 위에서 등록한 AuthenticationManager(ProviderManager) 설정
-     * 로그인 성공 시 호출할 handler, 실패 시 호출할 handler로 위에서 등록한 handler 설정
-     */
-    @Bean
-    public CustomJsonUsernamePasswordAuthenticationFilter customJsonUsernamePasswordAuthenticationFilter() {
-        CustomJsonUsernamePasswordAuthenticationFilter customJsonUsernamePasswordLoginFilter
-                = new CustomJsonUsernamePasswordAuthenticationFilter(objectMapper);
-        customJsonUsernamePasswordLoginFilter.setAuthenticationManager(authenticationManager());
-        customJsonUsernamePasswordLoginFilter.setAuthenticationSuccessHandler(loginSuccessHandler());
-        customJsonUsernamePasswordLoginFilter.setAuthenticationFailureHandler(loginFailureHandler());
-        return customJsonUsernamePasswordLoginFilter;
-    }
 
     @Bean
     public JwtAuthenticationProcessingFilter jwtAuthenticationProcessingFilter() {

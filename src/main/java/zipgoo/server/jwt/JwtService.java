@@ -183,14 +183,5 @@ public class JwtService {
         }
     }
 
-    public boolean isLoggedIn() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        // 인증 정보가 존재하면 사용자는 로그인 상태로 간주
-        return authentication != null && authentication.isAuthenticated();
-    }
-
-    public void logout() {
-        SecurityContextHolder.clearContext(); // 인증 정보 제거하여 로그아웃 처리
-    }
 
 }

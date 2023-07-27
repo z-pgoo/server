@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 @Getter
 public class UserSignUpDto {
     private String email;
-    private String password;
     private String nickname;
     private String birthdate;
     private int age;
