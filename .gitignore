@@ -41,10 +41,4 @@ out/
 .DS_Store
 /src/.DS_Store
 
-<<<<<<< feature/random_name_generator
-### oauth
-/src/main/resources/application-oauth.yml
-/src/main/resources/application-datasource.yml
-=======
 /src/main/resources/datasource.properties
->>>>>>> fix : gitignore
