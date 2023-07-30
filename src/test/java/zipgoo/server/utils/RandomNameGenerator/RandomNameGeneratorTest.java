@@ -2,12 +2,15 @@ package zipgoo.server.utils.RandomNameGenerator;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import zipgoo.server.repository.UserRepository;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RandomNameGeneratorTest {
-    RandomNameGeneratorUtil generator = new RandomNameGeneratorImpl();
+    UserRepository userRepository;
+    RandomNameGeneratorUtil generator = new RandomNameGeneratorImpl(userRepository);
     String firstName = "";
     String secondName = "";
 
