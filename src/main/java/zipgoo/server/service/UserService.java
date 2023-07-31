@@ -83,8 +83,6 @@ public class UserService {
 
         String email = jsonNode.get("response").get("eamil").asText();
 
-
-
         //----------------------------------------------------------------------------------------------------------------------------------------------------------------//
 
         User user = User.builder()
@@ -116,19 +114,26 @@ public class UserService {
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse();
 
         // 액세스 토큰으로 해당 sns api에서 정보 받아오는 코드 구현하고, 이메일, 닉네임, 생년월일 등 받아오고 닉네임에 해당하는 정보 가져오기.
+        String nickname = null;
 
-        String snsAccessToken = loginDto.getAccessToken();
-        String header = "Bearer " + snsAccessToken;
-        String apiURL = "https://openapi.naver.com/v1/nid/me";
+        if(loginDto.getSnsType() == "naver") {
 
-        Map<String, String> requestHeaders = new HashMap<>();
-        requestHeaders.put("Authorization", header);
-        String responseBody = getBody(apiURL, requestHeaders);
+            String snsAccessToken = loginDto.getAccessToken();
+            String header = "Bearer " + snsAccessToken;
+            String apiURL = "https://openapi.naver.com/v1/nid/me";
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(responseBody);
+            Map<String, String> requestHeaders = new HashMap<>();
+            requestHeaders.put("Authorization", header);
+            String responseBody = getBody(apiURL, requestHeaders);
 
-        String nickname = jsonNode.get("response").get("nickname").asText();
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(responseBody);
+
+            nickname = jsonNode.get("response").get("nickname").asText();
+        }
+        else{
+            nickname = "카카오 바보";
+        }
         //------------------------------------------------------------------//
 
         String accessToken = jwtService.createAccessToken();
