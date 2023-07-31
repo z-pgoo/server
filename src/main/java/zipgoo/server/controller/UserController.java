@@ -25,8 +25,8 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody LoginDto loginDto) throws Exception{
-        return "로그인 성공 !";
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDto loginDto) throws Exception{
+        return userService.login(loginDto);
     }
 
 

@@ -19,6 +19,7 @@ repositories {
 }
 
 dependencies {
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -32,6 +33,7 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	implementation 'mysql:mysql-connector-java' // 변경된 부분
 	testImplementation 'org.springframework.security:spring-security-test'
+
 }
 
 tasks.named('test') {
