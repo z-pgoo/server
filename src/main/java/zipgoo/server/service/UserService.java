@@ -10,7 +10,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -87,7 +86,9 @@ public class UserService {
             JsonNode jsonNode = objectMapper.readTree(responseBody);
 
             email = jsonNode.get("response").get("eamil").asText();
-            birthDate = jsonNode.get("response").get("date").asText();
+            String birthday = jsonNode.get("response").get("birthday").asText();
+            String birthyear = jsonNode.get("response").get("birthyear").asText();
+            birthDate = birthyear + "." + birthday.substring(0, 2) + "." + birthday.substring(2); // 1999.07.15와 같은 형식
         }
 
         else if(userSignUpDto.getSnsType() == "kakao"){
