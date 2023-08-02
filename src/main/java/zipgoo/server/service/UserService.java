@@ -69,26 +69,56 @@ public class UserService {
         // 액세스 토큰으로 해당 sns api에서 정보 받아오는 코드 구현하고, 이메일, 닉네임, 생년월일 등 받아오기
         // https://developers.naver.com/docs/login/profile/profile.md
 
+        String email = null;
+        String birthDate = null;
+
         //----------------------------------------------------------------------------------------------------------------------------------------------------------------//
-        String snsAccessToken = userSignUpDto.getAccessToken();
-        String header = "Bearer " + snsAccessToken;
-        String apiURL = "https://openapi.naver.com/v1/nid/me";
+        if(userSignUpDto.getSnsType() == "naver") {
 
-        Map<String, String> requestHeaders = new HashMap<>();
-        requestHeaders.put("Authorization", header);
-        String responseBody = getBody(apiURL, requestHeaders);
+            String snsAccessToken = userSignUpDto.getAccessToken();
+            String header = "Bearer " + snsAccessToken;
+            String apiURL = "https://openapi.naver.com/v1/nid/me";
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(responseBody);
+            Map<String, String> requestHeaders = new HashMap<>();
+            requestHeaders.put("Authorization", header);
+            String responseBody = getBody(apiURL, requestHeaders);
 
-        String email = jsonNode.get("response").get("eamil").asText();
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(responseBody);
+
+            email = jsonNode.get("response").get("eamil").asText();
+            birthDate = jsonNode.get("response").get("date").asText();
+        }
+
+        else if(userSignUpDto.getSnsType() == "kakao"){
+
+            String snsAccessToken = userSignUpDto.getAccessToken();
+            String header = "Bearer " + snsAccessToken;
+            String apiURL = "https://kapi.kakao.com/v2/user/me";
+
+            Map<String, String> requestHeaders = new HashMap<>();
+            requestHeaders.put("Authorization", header);
+            String responseBody = getBody(apiURL, requestHeaders);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(responseBody);
+
+            email = jsonNode.get("kakao_account").get("nickname").asText();
+            birthDate = jsonNode.get("kakao_account").get("birthday").asText();
+        }
+
+        else{
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+
+
 
         //----------------------------------------------------------------------------------------------------------------------------------------------------------------//
 
         User user = User.builder()
                 .email(email)
                 .nickname(userSignUpDto.getNickname())
-                //.birthDate("1999.07.15")
+                .birthDate(birthDate)
                 .role(Role.USER)
                 .refreshToken(refreshToken)
                 .build();
@@ -131,8 +161,23 @@ public class UserService {
 
             nickname = jsonNode.get("response").get("nickname").asText();
         }
+        else if(loginDto.getSnsType() == "kakao"){
+
+            String snsAccessToken = loginDto.getAccessToken();
+            String header = "Bearer " + snsAccessToken;
+            String apiURL = "https://kapi.kakao.com/v2/user/me";
+
+            Map<String, String> requestHeaders = new HashMap<>();
+            requestHeaders.put("Authorization", header);
+            String responseBody = getBody(apiURL, requestHeaders);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(responseBody);
+
+            nickname = jsonNode.get("properties").get("nickname").asText();
+        }
         else{
-            nickname = "카카오 바보";
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
         //------------------------------------------------------------------//
 
