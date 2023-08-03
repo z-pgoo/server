@@ -2,13 +2,7 @@ package zipgoo.server.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.http.HttpMethod;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Request;
-import org.apache.coyote.Response;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +40,7 @@ public class UserService {
     private final UserRepository userRepository;
 
 
+    @Transactional
     public ResponseEntity<Map<String, Object>> signUp(UserSignUpDto userSignUpDto) throws Exception{
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse();
 
@@ -71,8 +66,12 @@ public class UserService {
         String email = null;
         String birthDate = null;
 
+        System.out.println(userSignUpDto.getSnsType());
+        System.out.println(userSignUpDto.getAccessToken());
+        System.out.println(userSignUpDto.getSnsType());
+
         //----------------------------------------------------------------------------------------------------------------------------------------------------------------//
-        if(userSignUpDto.getSnsType() == "naver") {
+        if(userSignUpDto.getSnsType().equals("naver")) {
 
             String snsAccessToken = userSignUpDto.getAccessToken();
             String header = "Bearer " + snsAccessToken;
@@ -84,14 +83,15 @@ public class UserService {
 
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(responseBody);
+            System.out.println(jsonNode);
 
-            email = jsonNode.get("response").get("eamil").asText();
+            email = jsonNode.get("response").get("email").asText();
             String birthday = jsonNode.get("response").get("birthday").asText();
             String birthyear = jsonNode.get("response").get("birthyear").asText();
             birthDate = birthyear + "." + birthday.substring(0, 2) + "." + birthday.substring(2); // 1999.07.15와 같은 형식
         }
 
-        else if(userSignUpDto.getSnsType() == "kakao"){
+        else if(userSignUpDto.getSnsType().equals("kakao")){
 
             String snsAccessToken = userSignUpDto.getAccessToken();
             String header = "Bearer " + snsAccessToken;
@@ -104,12 +104,14 @@ public class UserService {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(responseBody);
 
-            email = jsonNode.get("kakao_account").get("nickname").asText();
+            email = jsonNode.get("kakao_account").get("email").asText();
             birthDate = jsonNode.get("kakao_account").get("birthday").asText();
         }
 
         else{
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            Map<String, Object> result = new HashMap<>();
+            result.put("data", Collections.emptyMap());
+            return ResponseEntity.badRequest().body(result);
         }
 
 
@@ -123,7 +125,8 @@ public class UserService {
                 .role(Role.USER)
                 .refreshToken(refreshToken)
                 .build();
-        userRepository.save(user);
+        userRepository.saveAndFlush(user);
+        System.out.println(refreshToken);
 
         Map<String, Object> result = new HashMap<>();
 
@@ -141,13 +144,14 @@ public class UserService {
         return ResponseEntity.ok().body(result);
     }
 
+    @Transactional
     public ResponseEntity<Map<String, Object>> login(LoginDto loginDto) throws Exception{
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse();
 
         // 액세스 토큰으로 해당 sns api에서 정보 받아오는 코드 구현하고, 이메일, 닉네임, 생년월일 등 받아오고 닉네임에 해당하는 정보 가져오기.
-        String nickname = null;
+        String email = null;
 
-        if(loginDto.getSnsType() == "naver") {
+        if(loginDto.getSnsType().equals("naver")) {
 
             String snsAccessToken = loginDto.getAccessToken();
             String header = "Bearer " + snsAccessToken;
@@ -160,9 +164,9 @@ public class UserService {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(responseBody);
 
-            nickname = jsonNode.get("response").get("nickname").asText();
+            email = jsonNode.get("response").get("email").asText();
         }
-        else if(loginDto.getSnsType() == "kakao"){
+        else if(loginDto.getSnsType().equals("kakao")){
 
             String snsAccessToken = loginDto.getAccessToken();
             String header = "Bearer " + snsAccessToken;
@@ -175,7 +179,7 @@ public class UserService {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(responseBody);
 
-            nickname = jsonNode.get("properties").get("nickname").asText();
+            email = jsonNode.get("kakao_account").get("email").asText();
         }
         else{
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -189,7 +193,7 @@ public class UserService {
         jwtService.setRefreshTokenHeader(response, refreshToken);
         response.setStatus(HttpServletResponse.SC_OK);
 
-        Optional<User> user = userRepository.findByNickname(nickname);
+        Optional<User> user = userRepository.findByEmail(email);
         Map<String, Object> result = new HashMap<>();
 
         if (user != null) {
