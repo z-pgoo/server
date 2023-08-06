@@ -1,7 +1,5 @@
 package zipgoo.server.utils.RandomNameGenerator;
 
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -69,15 +67,17 @@ public class RandomNameGeneratorImpl implements RandomNameGeneratorUtil {
      * @return 형용사 + 공백 + 동물이름
      */
     @Override
-    public String getFullName() {
+    public NameDto getFullName() {
         String name = getName();
         Optional<User> user = userRepository.findByNickname(name);
-        while (user.isPresent()){
+        while (user.isPresent()) {
             name = getName();
             user = userRepository.findByNickname(name);
         }
-        return name;
+        log.info("[]" + name);
+        return new NameDto(name);
     }
+
 
     private String getName() {
         return getFirstName() + " " + getSecondName();
