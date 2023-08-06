@@ -10,6 +10,9 @@ import zipgoo.server.dto.UserSignUpDto;
 import zipgoo.server.jwt.JwtService;
 import zipgoo.server.repository.UserRepository;
 import zipgoo.server.service.UserService;
+import zipgoo.server.service.response.CommonResponse;
+import zipgoo.server.service.response.ResponseService;
+import zipgoo.server.utils.RandomNameGenerator.NameDto;
 import zipgoo.server.utils.RandomNameGenerator.RandomNameGeneratorImpl;
 import zipgoo.server.utils.RandomNameGenerator.RandomNameGeneratorUtil;
 
@@ -21,6 +24,7 @@ import java.util.Map;
 public class UserController {
     private final UserService userService;
     private final RandomNameGeneratorUtil randomNameGenerator;
+    private final ResponseService responseService;
 
     @PostMapping("/sign-up")
     public ResponseEntity<Map<String, Object>> signUp(@RequestBody UserSignUpDto userSignUpDto) throws Exception{
@@ -31,10 +35,11 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDto loginDto) throws Exception{
         return userService.login(loginDto);
     }
-    @PostMapping("/random-name")
-    public String randName(){
-        return randomNameGenerator.getFullName();
+    @GetMapping("/random-name")
+    public CommonResponse<NameDto> randName(){
+        return responseService.getCommonResponse(randomNameGenerator.getFullName());
     }
+    
     @GetMapping("/jwt-test")
     public String jwtTest(){
         return "jwtTest 요청 성공";
