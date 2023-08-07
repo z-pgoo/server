@@ -18,9 +18,6 @@ import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import zipgoo.server.jwt.JwtAuthenticationProcessingFilter;
 import zipgoo.server.jwt.JwtService;
-import zipgoo.server.oauth2.handler.OAuth2LoginFailureHandler;
-import zipgoo.server.oauth2.handler.OAuth2LoginSuccessHandler;
-import zipgoo.server.oauth2.service.CustomOAuth2UserService;
 import zipgoo.server.repository.UserRepository;
 import zipgoo.server.service.LoginService;
 
@@ -33,9 +30,6 @@ public class SecurityConfig {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
-    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
-    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
-    private final CustomOAuth2UserService customOAuth2UserService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -57,14 +51,8 @@ public class SecurityConfig {
                 // 아이콘, css, js 관련
                 // 기본 페이지, css, image, js 하위 폴더에 있는 자료들은 모두 접근 가능, h2-console에 접근 가능
                 .antMatchers("/", "/css/**", "/images/**", "/js/**", "/favicon.ico", "/h2-console/**").permitAll()
-                .antMatchers("/sign-up").permitAll() // 회원가입 접근 가능
+                .antMatchers("/sign-up").permitAll(); // 회원가입 접근 가능
                 //.anyRequest().authenticated() // 위의 경로 이외에는 모두 인증된 사용자만 접근 가능
-                .and()
-                //== 소셜 로그인 설정 ==//
-                .oauth2Login()
-                .successHandler(oAuth2LoginSuccessHandler) // 동의하고 계속하기를 눌렀을 때 Handler 설정
-                .failureHandler(oAuth2LoginFailureHandler) // 소셜 로그인 실패 시 핸들러 설정
-                .userInfoEndpoint().userService(customOAuth2UserService); // customUserService 설정
 
         return http.build();
     }
@@ -116,15 +104,8 @@ public class SecurityConfig {
                 // 아이콘, css, js 관련
                 // 기본 페이지, css, image, js 하위 폴더에 있는 자료들은 모두 접근 가능, h2-console에 접근 가능
                 .antMatchers("/", "/css/**", "/images/**", "/js/**", "/favicon.ico", "/h2-console/**").permitAll()
-                .antMatchers("/sign-up").permitAll() // 회원가입 접근 가능
+                .antMatchers("/sign-up").permitAll(); // 회원가입 접근 가능
                 //.anyRequest().authenticated() // 위의 경로 이외에는 모두 인증된 사용자만 접근 가능
-                .and()
-                //== 소셜 로그인 설정 ==//
-                .oauth2Login()
-                .successHandler(oAuth2LoginSuccessHandler) // 동의하고 계속하기를 눌렀을 때 Handler 설정
-                .failureHandler(oAuth2LoginFailureHandler) // 소셜 로그인 실패 시 핸들러 설정
-                .userInfoEndpoint().userService(customOAuth2UserService); // customUserService 설정
-
     }
 
     // SecurityContextLogoutHandler 빈 등록

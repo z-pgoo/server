@@ -191,7 +191,6 @@ public class UserService {
 
         jwtService.setAccessTokenHeader(response, accessToken);
         jwtService.setRefreshTokenHeader(response, refreshToken);
-        response.setStatus(HttpServletResponse.SC_OK);
 
         Optional<User> user = userRepository.findByEmail(email);
         Map<String, Object> result = new HashMap<>();
@@ -203,11 +202,14 @@ public class UserService {
             data.put("birthDate", user.get().getBirthDate());
 
             result.put("data", data);
+            return ResponseEntity.ok().body(result);
         } else {
-            result.put("data", Collections.emptyMap());
+            result.put("code", 400);
+            result.put("message", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
+            return ResponseEntity.badRequest().body(result);
         }
 
-        return ResponseEntity.ok().body(result);
+
     }
 
     public static String getBody(String apiURL, Map<String, String> requestHeaders){
