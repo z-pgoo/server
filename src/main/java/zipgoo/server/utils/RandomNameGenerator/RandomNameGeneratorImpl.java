@@ -18,8 +18,8 @@ import java.util.Random;
 @Service
 public class RandomNameGeneratorImpl implements RandomNameGeneratorUtil {
     private final UserRepository userRepository;
-    public static final String ANIMAL_FILE_URL = "/Users/dlwnsgus07/Desktop/Project/server/src/main/java/zipgoo/server/utils/RandomNameGenerator/animalName.json";
-    public static final String ADJECTIVE_FILE_URL = "/Users/dlwnsgus07/Desktop/Project/server/src/main/java/zipgoo/server/utils/RandomNameGenerator/adjectiveName.json";
+    public static final String ANIMAL_FILE_URL = "src/main/java/zipgoo/server/utils/RandomNameGenerator/animalName.json";
+    public static final String ADJECTIVE_FILE_URL = "src/main/java/zipgoo/server/utils/RandomNameGenerator/adjectiveName.json";
     static Integer MAX_ANIMAL_COUNT = 41495;
     static Integer MAX_ADJECTIVE_COUNT = 43;
     private JSONObject adjectiveObj;
