@@ -39,10 +39,5 @@ public class UserController {
     public CommonResponse<NameDto> randName(){
         return responseService.getCommonResponse(randomNameGenerator.getFullName());
     }
-    
-    @GetMapping("/jwt-test")
-    public String jwtTest(){
-        return "jwtTest 요청 성공";
-    }
 
 }

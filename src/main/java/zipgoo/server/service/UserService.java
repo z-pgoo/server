@@ -60,15 +60,14 @@ public class UserService {
         jwtService.setRefreshTokenHeader(response, refreshToken);
         response.setStatus(HttpServletResponse.SC_OK);
 
-        // 액세스 토큰으로 해당 sns api에서 정보 받아오는 코드 구현하고, 이메일, 닉네임, 생년월일 등 받아오기
         // https://developers.naver.com/docs/login/profile/profile.md
 
         String email = null;
         String birthDate = null;
+        int ageRange = 0;
 
         System.out.println(userSignUpDto.getSnsType());
         System.out.println(userSignUpDto.getAccessToken());
-        System.out.println(userSignUpDto.getSnsType());
 
         //----------------------------------------------------------------------------------------------------------------------------------------------------------------//
         if(userSignUpDto.getSnsType().equals("naver")) {
@@ -85,10 +84,13 @@ public class UserService {
             JsonNode jsonNode = objectMapper.readTree(responseBody);
             System.out.println(jsonNode);
 
-            email = jsonNode.get("response").get("email").asText();
+
             String birthday = jsonNode.get("response").get("birthday").asText();
-            String birthyear = jsonNode.get("response").get("birthyear").asText();
-            birthDate = birthyear + "." + birthday.substring(0, 2) + "." + birthday.substring(2); // 1999.07.15와 같은 형식
+            String tempAge = jsonNode.get("response").get("age").asText();
+
+            email = jsonNode.get("response").get("email").asText();
+            ageRange = Integer.parseInt(tempAge.substring(0,2));
+            birthDate = birthday.substring(0, 2) + "." + birthday.substring(2); // 1999.07.15와 같은 형식
         }
 
         else if(userSignUpDto.getSnsType().equals("kakao")){
@@ -103,15 +105,20 @@ public class UserService {
 
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(responseBody);
+            String tempAge = jsonNode.get("kakao_account").get("age_range").asText();
+            String birthday = jsonNode.get("kakao_account").get("birthday").asText();
 
             email = jsonNode.get("kakao_account").get("email").asText();
-            birthDate = jsonNode.get("kakao_account").get("birthday").asText();
+            ageRange = Integer.parseInt(tempAge.substring(0,2));
+            birthDate = birthday.substring(4,2) + "." + birthday.substring(6);
         }
 
         else{
-            Map<String, Object> result = new HashMap<>();
-            result.put("data", Collections.emptyMap());
-            return ResponseEntity.badRequest().body(result);
+            response.setContentType(APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding("utf-8");
+            ErrorResponse errorResponse = new ErrorResponse(400, "snsType이 올바르지 않습니다.");
+            new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+            return ResponseEntity.badRequest().build();
         }
 
 
@@ -123,23 +130,19 @@ public class UserService {
                 .nickname(userSignUpDto.getNickname())
                 .birthDate(birthDate)
                 .role(Role.USER)
+                .ageRange(ageRange)
                 .refreshToken(refreshToken)
                 .build();
         userRepository.saveAndFlush(user);
         System.out.println(refreshToken);
 
         Map<String, Object> result = new HashMap<>();
-
-        if (user != null) {
-            Map<String, Object> data = new HashMap<>();
-            data.put("email", user.getEmail());
-            data.put("nickname", user.getNickname());
-            data.put("birthDate", user.getBirthDate());
-
-            result.put("data", data);
-        } else {
-            result.put("data", Collections.emptyMap());
-        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("email", user.getEmail());
+        data.put("nickname", user.getNickname());
+        data.put("birthDate", user.getBirthDate());
+        data.put("ageRange", user.getAgeRange());
+        result.put("data", data);
 
         return ResponseEntity.ok().body(result);
     }
@@ -182,7 +185,11 @@ public class UserService {
             email = jsonNode.get("kakao_account").get("email").asText();
         }
         else{
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType(APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding("utf-8");
+            ErrorResponse errorResponse = new ErrorResponse(400, "snsType이 올바르지 않습니다.");
+            new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+            return ResponseEntity.badRequest().build();
         }
         //------------------------------------------------------------------//
 
@@ -204,10 +211,12 @@ public class UserService {
             result.put("data", data);
             return ResponseEntity.ok().body(result);
         } else {
-            result.put("code", 400);
-            result.put("message", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
-            return ResponseEntity.badRequest().body(result);
+            result.put("code", 200);
+            result.put("errorMessage", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
+            return ResponseEntity.ok().body(result);
         }
+
+
 
 
     }
