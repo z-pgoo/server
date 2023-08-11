@@ -13,8 +13,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "user_id")
+    @Column(name = "user_id", columnDefinition = "BIGINT AUTO_INCREMENT")
     private long id;
     private String email;
     private String password;
