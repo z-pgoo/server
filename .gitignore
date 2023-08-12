@@ -41,6 +41,8 @@ out/
 .DS_Store
 /src/.DS_Store
 
+
 ### oauth
 /src/main/resources/application-oauth.yml
 /src/main/resources/application-datasource.yml
+/src/main/resources/da
