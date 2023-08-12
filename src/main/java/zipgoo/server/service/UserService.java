@@ -110,7 +110,8 @@ public class UserService {
 
             email = jsonNode.get("kakao_account").get("email").asText();
             ageRange = Integer.parseInt(tempAge.substring(0,2));
-            birthDate = birthday.substring(4,2) + "." + birthday.substring(6);
+            System.out.println(birthday);
+            birthDate = birthday.substring(0,2) + "." + birthday.substring(2);
         }
 
         else{
@@ -201,8 +202,9 @@ public class UserService {
 
         Optional<User> user = userRepository.findByEmail(email);
         Map<String, Object> result = new HashMap<>();
+        System.out.println(user);
 
-        if (user != null) {
+        if (!user.equals(Optional.empty())) {
             Map<String, Object> data = new HashMap<>();
             data.put("email", user.get().getEmail());
             data.put("nickname", user.get().getNickname());
@@ -212,7 +214,7 @@ public class UserService {
             return ResponseEntity.ok().body(result);
         } else {
             result.put("code", 200);
-            result.put("errorMessage", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
+            result.put("message", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
             return ResponseEntity.ok().body(result);
         }
 
