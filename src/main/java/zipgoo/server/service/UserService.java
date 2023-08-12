@@ -122,9 +122,15 @@ public class UserService {
             return ResponseEntity.badRequest().build();
         }
 
+        Map<String, Object> result = new HashMap<>();
 
 
         //----------------------------------------------------------------------------------------------------------------------------------------------------------------//
+        if(userSignUpDto.getNickname() == null){
+            result.put("errorCode", 400);
+            result.put("errorMessage", "이메일 값이 비어있습니다.");
+            return ResponseEntity.badRequest().body(result);
+        }
 
         User user = User.builder()
                 .email(email)
@@ -137,7 +143,7 @@ public class UserService {
         userRepository.saveAndFlush(user);
         System.out.println(refreshToken);
 
-        Map<String, Object> result = new HashMap<>();
+
         Map<String, Object> data = new HashMap<>();
         data.put("email", user.getEmail());
         data.put("nickname", user.getNickname());
