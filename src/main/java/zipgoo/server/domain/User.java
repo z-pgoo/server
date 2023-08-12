@@ -1,23 +1,34 @@
 package zipgoo.server.domain;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import java.time.LocalDateTime;
+import lombok.*;
 
-@Entity
-@Table
+import javax.persistence.*;
+
 @Getter
 @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+@Builder
+@Table(name = "USERS")
+@AllArgsConstructor
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String name;
-    private String nickname;
-    private String phoneNumber;
-    private String birth;
+    @Column(name = "user_id", columnDefinition = "BIGINT AUTO_INCREMENT")
+    private long id;
     private String email;
-    private LocalDateTime createTime = LocalDateTime.now();
+    private String password;
+    @Column(unique = true)
+    private String nickname;
+    private String birthDate;
+    private int ageRange;
 
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    private String refreshToken; // 리프레시 토큰
+
+    public void updateRefreshToken(String updateRefreshToken) {
+        this.refreshToken = updateRefreshToken;
+    }
 }
+

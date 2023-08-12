@@ -1,0 +1,169 @@
+package zipgoo.server.jwt;
+
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import zipgoo.server.domain.User;
+import zipgoo.server.repository.UserRepository;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+@Getter
+@Slf4j
+public class JwtService {
+    @Value("${spring.jwt.secretKey}")
+    private String secretKey;
+
+    @Value("${spring.jwt.access.expiration}")
+    private Long accessTokenExpirationPeriod;
+
+    @Value("${spring.jwt.refresh.expiration}")
+    private Long refreshTokenExpirationPeriod;
+
+    @Value("${spring.jwt.access.header}")
+    public String accessHeader;
+
+    @Value("${spring.jwt.refresh.header}")
+    public String refreshHeader;
+
+    public static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
+    public static final String REFRESH_TOKEN_SUBJECT = "RefreshToken";
+    public static final String EMAIL_CLAIM = "email";
+    public static final String BEARER = "Bearer ";
+
+    private final UserRepository userRepository;
+
+    /**
+     * AccessToken 생성 메소드
+     */
+    public String createAccessToken() {
+        Date now = new Date();
+        log.info("createAccessToken");
+        return JWT.create() // JWT 토큰을 생성하는 빌더 반환
+                .withSubject(ACCESS_TOKEN_SUBJECT) // JWT의 Subject 지정 -> AccessToken이므로 AccessToken
+                .withExpiresAt(new Date(now.getTime() + accessTokenExpirationPeriod)) // 토큰 만료 시간 설정
+                .sign(Algorithm.HMAC512(secretKey)); // HMAC512 알고리즘 사용, application-jwt.yml에서 지정한 secret 키로 암호화
+    }
+
+    /**
+     * RefreshToken 생성
+     * RefreshToken은 Claim에 email도 넣지 않으므로 withClaim() X
+     */
+    public String createRefreshToken() {
+        Date now = new Date();
+        log.info("createRefreshToken");
+        return JWT.create()
+                .withSubject(REFRESH_TOKEN_SUBJECT)
+                .withExpiresAt(new Date(now.getTime() + refreshTokenExpirationPeriod))
+                .sign(Algorithm.HMAC512(secretKey));
+    }
+
+    /**
+     * AccessToken 헤더에 실어서 보내기
+     */
+    public void sendAccessToken(HttpServletResponse response, String accessToken) {
+        response.setStatus(HttpServletResponse.SC_OK);
+        log.info("sendAccessToken");
+
+        response.setHeader(accessHeader, accessToken);
+        log.info("재발급된 Access Token : {}", accessToken);
+    }
+
+    /**
+     * AccessToken + RefreshToken 헤더에 실어서 보내기
+     */
+    public void sendAccessAndRefreshToken(HttpServletResponse response, String accessToken, String refreshToken) {
+        response.setStatus(HttpServletResponse.SC_OK);
+
+        setAccessTokenHeader(response, accessToken);
+        setRefreshTokenHeader(response, refreshToken);
+        log.info("Access Token, Refresh Token 헤더 설정 완료");
+
+    }
+
+    /**
+     * 헤더에서 RefreshToken 추출
+     * 토큰 형식 : Bearer XXX에서 Bearer를 제외하고 순수 토큰만 가져오기 위해서
+     * 헤더를 가져온 후 "Bearer"를 삭제(""로 replace)
+     */
+    public Optional<String> extractRefreshToken(HttpServletRequest request) {
+        log.info("extractRefreshToken");
+        return Optional.ofNullable(request.getHeader(refreshHeader))
+                .filter(refreshToken -> refreshToken.startsWith(BEARER))
+                .map(refreshToken -> refreshToken.replace(BEARER, ""));
+    }
+
+    /**
+     * 헤더에서 AccessToken 추출
+     * 토큰 형식 : Bearer XXX에서 Bearer를 제외하고 순수 토큰만 가져오기 위해서
+     * 헤더를 가져온 후 "Bearer"를 삭제(""로 replace)
+     */
+    public Optional<String> extractAccessToken(HttpServletRequest request) {
+        log.info("extractAccessToken");
+        return Optional.ofNullable(request.getHeader(accessHeader))
+                .filter(refreshToken -> refreshToken.startsWith(BEARER))
+                .map(refreshToken -> refreshToken.replace(BEARER, ""));
+    }
+
+    /**
+     * AccessToken에서 Email 추출
+     * 추출 전에 JWT.require()로 검증기 생성
+     * verify로 AceessToken 검증 후
+     * 유효하다면 getClaim()으로 이메일 추출
+     * 유효하지 않다면 빈 Optional 객체 반환
+     */
+    public Optional<String> extractEmail(String accessToken) {
+        log.info("extractEmail");
+        try {
+            // 토큰 유효성 검사하는 데에 사용할 알고리즘이 있는 JWT verifier builder 반환
+            return Optional.ofNullable(JWT.require(Algorithm.HMAC512(secretKey))
+                    .build() // 반환된 빌더로 JWT verifier 생성
+                    .verify(accessToken) // accessToken을 검증하고 유효하지 않다면 예외 발생
+                    .getClaim(EMAIL_CLAIM) // claim(Emial) 가져오기
+                    .asString());
+        } catch (Exception e) {
+            log.error("액세스 토큰이 유효하지 않습니다.");
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * AccessToken 헤더 설정
+     */
+    public void setAccessTokenHeader(HttpServletResponse response, String accessToken) {
+        response.setHeader(accessHeader, accessToken);
+    }
+
+    /**
+     * RefreshToken 헤더 설정
+     */
+    public void setRefreshTokenHeader(HttpServletResponse response, String refreshToken) {
+        response.setHeader(refreshHeader, refreshToken);
+    }
+
+    /**
+     * RefreshToken DB 저장
+     */
+    public void updateRefreshToken(String email, String refreshToken) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("일치하는 회원이 없습니다."));
+        user.updateRefreshToken(refreshToken);
+        userRepository.saveAndFlush(user);
+
+    }
+
+
+}

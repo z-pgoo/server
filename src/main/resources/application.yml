@@ -1,0 +1,36 @@
+spring:
+  profiles:
+    group:
+      "local" : "local, jwt, oauth, datasource"
+    active : local
+
+---
+spring:
+  config:
+    activate:
+      on-profile: "local"
+
+  h2:
+    console:
+      enabled: true
+
+  jpa:
+    show-sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+
+    hibernate:
+      ddl-auto:  create
+    generate-ddl: true
+
+  jwt:
+    secretKey: "er2wqe43w234qw2342rwer32erwe234234er23we3we3re3e3e3rw342r4w2r4q4r4q1wre421rqr4212q1re432e4"
+    access:
+      expiration: 3600000
+      header: Authorization
+    refresh:
+      expiration: 1209600000
+      header: Authorization-refresh
