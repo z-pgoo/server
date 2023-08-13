@@ -82,15 +82,22 @@ public class UserService {
 
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(responseBody);
-            System.out.println(jsonNode);
 
+            try {
+                String birthday = jsonNode.get("response").get("birthday").asText();
+                String tempAge = jsonNode.get("response").get("age").asText();
 
-            String birthday = jsonNode.get("response").get("birthday").asText();
-            String tempAge = jsonNode.get("response").get("age").asText();
-
-            email = jsonNode.get("response").get("email").asText();
-            ageRange = Integer.parseInt(tempAge.substring(0,2));
-            birthDate = birthday.substring(0, 2) + "." + birthday.substring(2); // 1999.07.15와 같은 형식
+                email = jsonNode.get("response").get("email").asText();
+                ageRange = Integer.parseInt(tempAge.substring(0, 2));
+                birthDate = birthday.substring(0, 2) + "." + birthday.substring(2); // 1999.07.15와 같은 형식
+            }
+            catch (Exception e){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 만료되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
+            }
         }
 
         else if(userSignUpDto.getSnsType().equals("kakao")){
@@ -105,12 +112,23 @@ public class UserService {
 
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(responseBody);
-            String tempAge = jsonNode.get("kakao_account").get("age_range").asText();
-            String birthday = jsonNode.get("kakao_account").get("birthday").asText();
 
-            email = jsonNode.get("kakao_account").get("email").asText();
-            ageRange = Integer.parseInt(tempAge.substring(0,2));
-            birthDate = birthday.substring(4,2) + "." + birthday.substring(6);
+            try {
+                String tempAge = jsonNode.get("kakao_account").get("age_range").asText();
+                String birthday = jsonNode.get("kakao_account").get("birthday").asText();
+
+                email = jsonNode.get("kakao_account").get("email").asText();
+                ageRange = Integer.parseInt(tempAge.substring(0, 2));
+                System.out.println(birthday);
+                birthDate = birthday.substring(0, 2) + "." + birthday.substring(2);
+            }
+            catch (Exception e){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 만료되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
+            }
         }
 
         else{
@@ -121,9 +139,15 @@ public class UserService {
             return ResponseEntity.badRequest().build();
         }
 
+        Map<String, Object> result = new HashMap<>();
 
 
         //----------------------------------------------------------------------------------------------------------------------------------------------------------------//
+        if(userSignUpDto.getNickname() == null){
+            result.put("errorCode", 400);
+            result.put("errorMessage", "이메일 값이 비어있습니다.");
+            return ResponseEntity.badRequest().body(result);
+        }
 
         User user = User.builder()
                 .email(email)
@@ -136,7 +160,7 @@ public class UserService {
         userRepository.saveAndFlush(user);
         System.out.println(refreshToken);
 
-        Map<String, Object> result = new HashMap<>();
+
         Map<String, Object> data = new HashMap<>();
         data.put("email", user.getEmail());
         data.put("nickname", user.getNickname());
@@ -166,8 +190,18 @@ public class UserService {
 
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(responseBody);
+            try{
+                email = jsonNode.get("response").get("email").asText();
+            }
+            catch (Exception e){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 만료되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
+            }
 
-            email = jsonNode.get("response").get("email").asText();
+
         }
         else if(loginDto.getSnsType().equals("kakao")){
 
@@ -182,7 +216,16 @@ public class UserService {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(responseBody);
 
-            email = jsonNode.get("kakao_account").get("email").asText();
+            try {
+                email = jsonNode.get("kakao_account").get("email").asText();
+            }
+            catch (Exception e){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 만료되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
+            }
         }
         else{
             response.setContentType(APPLICATION_JSON_VALUE);
@@ -201,8 +244,9 @@ public class UserService {
 
         Optional<User> user = userRepository.findByEmail(email);
         Map<String, Object> result = new HashMap<>();
+        System.out.println(user);
 
-        if (user != null) {
+        if (!user.equals(Optional.empty())) {
             Map<String, Object> data = new HashMap<>();
             data.put("email", user.get().getEmail());
             data.put("nickname", user.get().getNickname());
@@ -212,7 +256,7 @@ public class UserService {
             return ResponseEntity.ok().body(result);
         } else {
             result.put("code", 200);
-            result.put("errorMessage", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
+            result.put("message", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
             return ResponseEntity.ok().body(result);
         }
 
