@@ -1,9 +1,6 @@
 package zipgoo.server.domain;
 
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
@@ -12,8 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
-
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Entity
 public class Post {
     @Id
@@ -22,7 +19,8 @@ public class Post {
     private Category category;
     private String title;    // 제목
     private String content;    // 내용
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="user_id")
     private User user;// 작성자
     private int saves;    // 조회수
     private int recommend; // 추천 수
