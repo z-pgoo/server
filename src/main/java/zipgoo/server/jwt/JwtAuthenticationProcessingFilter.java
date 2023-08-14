@@ -74,7 +74,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
 
         // /login과 /sign-up은 요청 헤더에 토큰이 존재하지 않으므로, 검사를 진행하지 않음.
-        if(request.getRequestURI().equals(NO_CHECK_URL) || request.getRequestURI().contains("/random-name") ||request.getRequestURI().contains("/sign-up") ){
+        if(request.getRequestURI().equals(NO_CHECK_URL) || request.getRequestURI().contains("/random-name") ||request.getRequestURI().contains("/sign-up") || request.getRequestURI().contains("/search-dong") ){
             filterChain.doFilter(request, response);
             return ;
         }
