@@ -26,4 +26,8 @@ public class CommunityController {
         return dongs;
     }
 
+    public List<Dong> searchDongByKeyword(@RequestBody String keyword){
+        List<Dong> dongs = dongRepository.findByAreaDongStartingWith(keyword);
+        return dongs;
+    }
 }
