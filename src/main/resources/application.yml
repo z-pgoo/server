@@ -34,6 +34,3 @@ spring:
     refresh:
       expiration: 1209600000
       header: Authorization-refresh
-
-server:
-  port: 80
