@@ -166,6 +166,7 @@ public class UserService {
         data.put("nickname", user.getNickname());
         data.put("birthDate", user.getBirthDate());
         data.put("ageRange", user.getAgeRange());
+        data.put("result", true);
         result.put("data", data);
 
         return ResponseEntity.ok().body(result);
@@ -251,12 +252,15 @@ public class UserService {
             data.put("email", user.get().getEmail());
             data.put("nickname", user.get().getNickname());
             data.put("birthDate", user.get().getBirthDate());
+            data.put("result", true);
 
             result.put("data", data);
             return ResponseEntity.ok().body(result);
         } else {
-            result.put("code", 200);
+            //{ code: "USER-NOT-EXIST, message: ~~~, result: false }
+            result.put("code", "USER-NOT-EXIST");
             result.put("message", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
+            result.put("result", false);
             return ResponseEntity.ok().body(result);
         }
 
