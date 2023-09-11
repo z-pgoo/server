@@ -16,12 +16,12 @@ public class CommunityController {
     @PostMapping("/search-dong")
     public List<Area> searchDongByKeyword(@RequestBody Map<String, String> requestBody) {
         String keyword = requestBody.get("keyword");
-        List<Area> dongs = dongRepository.findByAreaDongStartingWith(keyword);
+        List<Area> dongs = dongRepository.findAreaByDongStartingWith(keyword);
         return dongs;
     }
 
     public List<Area> searchDongByKeyword(@RequestBody String keyword){
-        List<Area> dongs = dongRepository.findByAreaDongStartingWith(keyword);
+        List<Area> dongs = dongRepository.findAreaByDongStartingWith(keyword);
         return dongs;
     }
 }
