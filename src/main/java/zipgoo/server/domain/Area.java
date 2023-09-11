@@ -14,12 +14,11 @@ import javax.persistence.Table;
 @Builder
 @Table(name = "AREAS")
 @AllArgsConstructor
-public class Dong {
+public class Area {
     @Id
     @Column(name = "area_id", columnDefinition = "BIGINT AUTO_INCREMENT")
     private long id;
-    private String areaDo;
-    private String areaSi;
-    private String areaGu;
-    private String areaDong;
+    private String si;
+    private String gu;
+    private String dong;
 }
