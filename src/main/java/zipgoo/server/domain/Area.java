@@ -12,7 +12,7 @@ import javax.persistence.Table;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Builder
-@Table(name = "AREAS")
+@Table(name = "AREA")
 @AllArgsConstructor
 public class Area {
     @Id
