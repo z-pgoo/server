@@ -90,6 +90,12 @@ public class UserService {
                 email = jsonNode.get("response").get("email").asText();
                 ageRange = Integer.parseInt(tempAge.substring(0, 2));
                 birthDate = birthday.substring(0, 2) + "." + birthday.substring(2); // 1999.07.15와 같은 형식
+            }catch(NullPointerException ne){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 잘못되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
             }
             catch (Exception e){
                 response.setContentType(APPLICATION_JSON_VALUE);
@@ -121,7 +127,14 @@ public class UserService {
                 ageRange = Integer.parseInt(tempAge.substring(0, 2));
                 System.out.println(birthday);
                 birthDate = birthday.substring(0, 2) + "." + birthday.substring(2);
+            }catch(NullPointerException ne){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 잘못되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
             }
+
             catch (Exception e){
                 response.setContentType(APPLICATION_JSON_VALUE);
                 response.setCharacterEncoding("utf-8");
@@ -193,6 +206,12 @@ public class UserService {
             JsonNode jsonNode = objectMapper.readTree(responseBody);
             try{
                 email = jsonNode.get("response").get("email").asText();
+            }catch(NullPointerException ne){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 잘못되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
             }
             catch (Exception e){
                 response.setContentType(APPLICATION_JSON_VALUE);
@@ -219,6 +238,13 @@ public class UserService {
 
             try {
                 email = jsonNode.get("kakao_account").get("email").asText();
+            }
+            catch(NullPointerException ne){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 잘못되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
             }
             catch (Exception e){
                 response.setContentType(APPLICATION_JSON_VALUE);
