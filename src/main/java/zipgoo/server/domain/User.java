@@ -1,6 +1,7 @@
 package zipgoo.server.domain;
 
 import lombok.*;
+import zipgoo.server.domain.type.Role;
 
 import javax.persistence.*;
 
