@@ -8,5 +8,5 @@ import zipgoo.server.domain.Review;
 public interface StorageRepository{
     String upload(MultipartFile multipartFiles);
 
-    String deleteByFileName(String fileName);
+    void delete(String fileName);
 }

@@ -1,7 +1,9 @@
 package zipgoo.server.service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import zipgoo.server.dto.ImageUploadResponse;
 import zipgoo.server.exception.BadRequestException;
 import zipgoo.server.exception.InternalServerException;
 import zipgoo.server.repository.StorageRepository;
@@ -13,7 +15,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -21,12 +22,14 @@ public class ImageStorageService {
     private static final int MAX_IMAGE_FILE_LENGTH = 10;
     private final StorageRepository storageRepository;
     private final Executor executor;
-    public List<String> uploadFiles(MultipartFile[] imageFiles){
+    @Value("mock")
+    private String baseUrl;
+    public ImageUploadResponse uploadFiles(MultipartFile[] imageFiles){
         validate(imageFiles);
         List<CompletableFuture<String>> futureFiles = Arrays.stream(imageFiles)
                 .map(file -> CompletableFuture.supplyAsync(()->storageRepository.upload(file), executor)).toList();
         List<String> fileNames = getFileNamesFromFutures(futureFiles);
-        return fileNames;
+        return convertToImageUploadResponse(fileNames);
     }
 
     private List<String> getFileNamesFromFutures(List<CompletableFuture<String>> futureFiles) {
@@ -50,10 +53,10 @@ public class ImageStorageService {
         }
     }
 
-    private void deleteFiles(List<String> fileNames) {
+    public void deleteFiles(List<String> fileNames) {
         fileNames.stream()
                 .parallel()
-                .forEach(storageRepository::deleteByFileName);
+                .forEach(storageRepository::delete);
     }
 
     private void validate(MultipartFile[] imageFiles) {
@@ -71,4 +74,10 @@ public class ImageStorageService {
         }
     }
 
+    private ImageUploadResponse convertToImageUploadResponse(List<String> fileNames) {
+        List<String> urls = fileNames.stream()
+                .map(fileName -> baseUrl + fileName)
+                .toList();
+        return new ImageUploadResponse(urls, fileNames);
+    }
 }
