@@ -1,7 +1,7 @@
 spring:
   profiles:
     group:
-      "local" : "local, jwt, oauth, datasource"
+      "local" : "local, jwt, oauth, datasource, aws"
     active : local
 
 ---
@@ -9,7 +9,10 @@ spring:
   config:
     activate:
       on-profile: "local"
-
+  servlet:
+    multipart:
+      maxFileSize: 10MB # 파일 하나의 최대 크기
+      maxRequestSize: 30MB  # 한 번에 최대 업로드 가능 용량
   h2:
     console:
       enabled: true

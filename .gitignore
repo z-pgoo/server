@@ -46,3 +46,6 @@ out/
 /src/main/resources/application-oauth.yml
 /src/main/resources/application-datasource.yml
 /src/main/resources/da
+
+.env
+/src/main/resources/application-aws.yml

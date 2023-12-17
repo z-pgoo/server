@@ -10,12 +10,14 @@ import zipgoo.server.service.ReviewFacadeService;
 import zipgoo.server.service.response.CommonResponse;
 import zipgoo.server.service.response.ResponseService;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class ReviewController {
     private final ReviewFacadeService reviewFacadeService;
     private final ResponseService responseService;
-    @PostMapping
+    @PostMapping("/create/review")
     public CommonResponse<Long> create(@RequestPart("review") Review review,
                                        @RequestPart(value = "images", required = false) MultipartFile[] imageFiles){
         if (imageFiles == null) {
@@ -23,5 +25,14 @@ public class ReviewController {
         }
         Long reviewId = reviewFacadeService.createReview(imageFiles, review);
         return responseService.getCommonResponse(reviewId);
+    }
+
+    @PostMapping("/create/images")
+    public CommonResponse<List<String>> createImages(@RequestPart(value = "images", required = false) MultipartFile[] imageFiles) {
+        if (imageFiles == null) {
+            imageFiles = new MultipartFile[0];
+        }
+        List<String> image = reviewFacadeService.createImage(imageFiles);
+        return responseService.getCommonResponse(image);
     }
 }

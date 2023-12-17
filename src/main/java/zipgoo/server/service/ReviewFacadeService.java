@@ -7,6 +7,8 @@ import zipgoo.server.domain.Review;
 import zipgoo.server.dto.ImageUploadResponse;
 import zipgoo.server.exception.InternalServerException;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ReviewFacadeService {
@@ -21,5 +23,8 @@ public class ReviewFacadeService {
             imageStorageService.deleteFiles(imageUploadResponse.fileNames());
             throw e;
         }
+    }
+    public List<String> createImage(MultipartFile[] files){
+        return imageStorageService.uploadFiles(files).urls();
     }
 }

@@ -18,7 +18,7 @@ public class ReviewService {
     private final ImageRepository imageRepository;
 
     public Long createReview(Review review, List<String> imageUrls){
-        Review save = reviewRepository.save(review);
+        reviewRepository.save(review);
         List<Image> images = imageUrls.stream()
                 .map(url -> new Image(review, url))
                 .toList();

@@ -1,5 +1,6 @@
 package zipgoo.server.service;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,11 +19,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ImageStorageService {
     private static final int MAX_IMAGE_FILE_LENGTH = 10;
     private final StorageRepository storageRepository;
     private final Executor executor;
-    @Value("mock")
+    @Value("${cloud.aws.s3.base-url}")
     private String baseUrl;
     public ImageUploadResponse uploadFiles(MultipartFile[] imageFiles){
         validate(imageFiles);
@@ -69,7 +71,8 @@ public class ImageStorageService {
 
     private void validateImageFile(MultipartFile file) {
         String contentType = file.getContentType();
-        if (contentType == null || contentType.startsWith("image/")) {
+        if (contentType == null || !contentType.startsWith("image/")) {
+            log.info("잘못된 이미지 형식입니다. 현재 이미지 형식 {}", contentType);
             throw new BadRequestException("image 형식이 아닙니다.");
         }
     }

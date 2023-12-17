@@ -12,6 +12,7 @@ import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMap
 import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import zipgoo.server.exception.ErrorResponse;
 import zipgoo.server.repository.UserRepository;
 
 import javax.servlet.FilterChain;
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpHeaders.TE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -41,6 +43,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
     private static final String NO_CHECK_URL = "/login"; // "/login"으로 들어오는 요청은 Filter 작동 X
+    private static final String TEST_URL = "/create";
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
@@ -70,7 +73,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
 
         // /login과 /sign-up은 요청 헤더에 토큰이 존재하지 않으므로, 검사를 진행하지 않음.
-        if(request.getRequestURI().equals(NO_CHECK_URL) || request.getRequestURI().contains("/random-name") ||request.getRequestURI().contains("/sign-up") || request.getRequestURI().contains("/search-dong") ){
+        if(request.getRequestURI().equals(NO_CHECK_URL) || request.getRequestURI().contains("/random-name") ||request.getRequestURI().contains("/sign-up") || request.getRequestURI().contains("/search-dong")||request.getRequestURI().contains(TEST_URL)){
             filterChain.doFilter(request, response);
             return ;
         }
