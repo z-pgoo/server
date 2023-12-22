@@ -280,20 +280,16 @@ public class UserService {
             data.put("result", true);
 
             result.put("data", data);
-            return ResponseEntity.ok().body(result);
         } else {
             //{ code: "USER-NOT-EXIST, message: ~~~, result: false }
             result.put("code", "USER-NOT-EXIST");
             result.put("message", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
             result.put("result", false);
-            return ResponseEntity.ok().body(result);
         }
-
-
+        return ResponseEntity.ok().body(result);
 
 
     }
-
     public static String getBody(String apiURL, Map<String, String> requestHeaders){
         HttpURLConnection con = connect(apiURL);
         try{
