@@ -3,6 +3,7 @@ package zipgoo.server.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final JwtService jwtService;
     private final UserRepository userRepository;
@@ -41,9 +43,10 @@ public class UserService {
 
     @Transactional
     public ResponseEntity<Map<String, Object>> signUp(UserSignUpDto userSignUpDto) throws Exception{
+        log.info("userSignUpDto 정보" + userSignUpDto.toString());
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse();
-
         if(userRepository.findByNickname(userSignUpDto.getNickname()).isPresent()){
+            log.info("user catch");
             response.setContentType(APPLICATION_JSON_VALUE);
             response.setCharacterEncoding("utf-8");
             ErrorResponse errorResponse = new ErrorResponse(400, "이미 존재하는 닉네임 입니다.");
@@ -54,7 +57,7 @@ public class UserService {
 
         String accessToken = jwtService.createAccessToken();
         String refreshToken = jwtService.createRefreshToken();
-
+        log.info("유저 만들기 시작");
         jwtService.setAccessTokenHeader(response, accessToken);
         jwtService.setRefreshTokenHeader(response, refreshToken);
         response.setStatus(HttpServletResponse.SC_OK);
@@ -106,7 +109,7 @@ public class UserService {
         }
 
         else if(userSignUpDto.getSnsType().equals("kakao")){
-
+            log.info("카카오 만들기 싲가");
             String snsAccessToken = userSignUpDto.getAccessToken();
             String header = "Bearer " + snsAccessToken;
             String apiURL = "https://kapi.kakao.com/v2/user/me";
@@ -262,17 +265,12 @@ public class UserService {
         }
         //------------------------------------------------------------------//
 
-        String accessToken = jwtService.createAccessToken();
-        String refreshToken = jwtService.createRefreshToken();
-
-        jwtService.setAccessTokenHeader(response, accessToken);
-        jwtService.setRefreshTokenHeader(response, refreshToken);
-
         Optional<User> user = userRepository.findByEmail(email);
         Map<String, Object> result = new HashMap<>();
         System.out.println(user);
 
         if (!user.equals(Optional.empty())) {
+            log.info("user Empty rubnning -------------");
             Map<String, Object> data = new HashMap<>();
             data.put("email", user.get().getEmail());
             data.put("nickname", user.get().getNickname());
@@ -286,6 +284,12 @@ public class UserService {
             result.put("message", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
             result.put("result", false);
         }
+        String accessToken = jwtService.createAccessToken();
+        String refreshToken = jwtService.createRefreshToken();
+
+        jwtService.setAccessTokenHeader(response, accessToken);
+        jwtService.setRefreshTokenHeader(response, refreshToken);
+
         return ResponseEntity.ok().body(result);
 
 
