@@ -1,6 +1,7 @@
 package zipgoo.server.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class UserController {
     private final UserService userService;
     private final RandomNameGeneratorUtil randomNameGenerator;
@@ -28,11 +30,13 @@ public class UserController {
 
     @PostMapping("/sign-up")
     public ResponseEntity<Map<String, Object>> signUp(@RequestBody UserSignUpDto userSignUpDto) throws Exception{
+        log.info("회원가입 요청 시작 User : {}", userSignUpDto.toString());
         return userService.signUp(userSignUpDto);
     }
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDto loginDto) throws Exception{
+        log.info("로그인 요청 시작 User : {}", loginDto);
         return userService.login(loginDto);
     }
     @GetMapping("/random-name")
