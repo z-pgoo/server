@@ -28,12 +28,14 @@ public class UserController {
     private final RandomNameGeneratorUtil randomNameGenerator;
     private final ResponseService responseService;
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/sign-up")
     public ResponseEntity<Map<String, Object>> signUp(@RequestBody UserSignUpDto userSignUpDto) throws Exception{
         log.info("회원가입 요청 시작 User : {}", userSignUpDto.toString());
         return userService.signUp(userSignUpDto);
     }
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDto loginDto) throws Exception{
         log.info("로그인 요청 시작 User : {}", loginDto);

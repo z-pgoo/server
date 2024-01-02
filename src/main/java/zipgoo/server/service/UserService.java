@@ -269,8 +269,9 @@ public class UserService {
         Map<String, Object> result = new HashMap<>();
         System.out.println(user);
 
-        if (!user.equals(Optional.empty())) {
+        if (user.isPresent()) {
             log.info("user Empty rubnning -------------");
+            log.info("user = {}", user.toString());
             Map<String, Object> data = new HashMap<>();
             data.put("email", user.get().getEmail());
             data.put("nickname", user.get().getNickname());
@@ -279,6 +280,7 @@ public class UserService {
 
             result.put("data", data);
         } else {
+            log.info("user not Exist");
             //{ code: "USER-NOT-EXIST, message: ~~~, result: false }
             result.put("code", "USER-NOT-EXIST");
             result.put("message", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
