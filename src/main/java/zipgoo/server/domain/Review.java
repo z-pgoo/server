@@ -3,7 +3,7 @@ package zipgoo.server.domain;
 import lombok.*;
 import zipgoo.server.domain.type.Pay;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;

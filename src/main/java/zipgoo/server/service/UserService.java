@@ -17,7 +17,7 @@ import zipgoo.server.exception.ErrorResponse;
 import zipgoo.server.jwt.JwtService;
 import zipgoo.server.repository.UserRepository;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
