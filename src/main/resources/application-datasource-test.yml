@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://database-zipgoo.cnnvfdwzmmaf.ap-northeast-2.rds.amazonaws.com:3306/zipgoo?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: {}
+    password: {}
