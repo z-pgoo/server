@@ -3,12 +3,13 @@ package zipgoo.server.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import zipgoo.server.domain.Role;
+import zipgoo.server.domain.type.Role;
 import zipgoo.server.domain.User;
 import zipgoo.server.dto.LoginDto;
 import zipgoo.server.dto.UserSignUpDto;
@@ -16,7 +17,7 @@ import zipgoo.server.exception.ErrorResponse;
 import zipgoo.server.jwt.JwtService;
 import zipgoo.server.repository.UserRepository;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,7 +26,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -35,6 +35,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final JwtService jwtService;
     private final UserRepository userRepository;
@@ -42,9 +43,10 @@ public class UserService {
 
     @Transactional
     public ResponseEntity<Map<String, Object>> signUp(UserSignUpDto userSignUpDto) throws Exception{
+        log.info("userSignUpDto 정보" + userSignUpDto.toString());
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse();
-
         if(userRepository.findByNickname(userSignUpDto.getNickname()).isPresent()){
+            log.info("user catch");
             response.setContentType(APPLICATION_JSON_VALUE);
             response.setCharacterEncoding("utf-8");
             ErrorResponse errorResponse = new ErrorResponse(400, "이미 존재하는 닉네임 입니다.");
@@ -55,7 +57,7 @@ public class UserService {
 
         String accessToken = jwtService.createAccessToken();
         String refreshToken = jwtService.createRefreshToken();
-
+        log.info("유저 만들기 시작");
         jwtService.setAccessTokenHeader(response, accessToken);
         jwtService.setRefreshTokenHeader(response, refreshToken);
         response.setStatus(HttpServletResponse.SC_OK);
@@ -90,6 +92,12 @@ public class UserService {
                 email = jsonNode.get("response").get("email").asText();
                 ageRange = Integer.parseInt(tempAge.substring(0, 2));
                 birthDate = birthday.substring(0, 2) + "." + birthday.substring(2); // 1999.07.15와 같은 형식
+            }catch(NullPointerException ne){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 잘못되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
             }
             catch (Exception e){
                 response.setContentType(APPLICATION_JSON_VALUE);
@@ -101,7 +109,7 @@ public class UserService {
         }
 
         else if(userSignUpDto.getSnsType().equals("kakao")){
-
+            log.info("카카오 만들기 싲가");
             String snsAccessToken = userSignUpDto.getAccessToken();
             String header = "Bearer " + snsAccessToken;
             String apiURL = "https://kapi.kakao.com/v2/user/me";
@@ -121,7 +129,14 @@ public class UserService {
                 ageRange = Integer.parseInt(tempAge.substring(0, 2));
                 System.out.println(birthday);
                 birthDate = birthday.substring(0, 2) + "." + birthday.substring(2);
+            }catch(NullPointerException ne){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 잘못되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
             }
+
             catch (Exception e){
                 response.setContentType(APPLICATION_JSON_VALUE);
                 response.setCharacterEncoding("utf-8");
@@ -166,6 +181,7 @@ public class UserService {
         data.put("nickname", user.getNickname());
         data.put("birthDate", user.getBirthDate());
         data.put("ageRange", user.getAgeRange());
+        data.put("result", true);
         result.put("data", data);
 
         return ResponseEntity.ok().body(result);
@@ -192,6 +208,12 @@ public class UserService {
             JsonNode jsonNode = objectMapper.readTree(responseBody);
             try{
                 email = jsonNode.get("response").get("email").asText();
+            }catch(NullPointerException ne){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 잘못되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
             }
             catch (Exception e){
                 response.setContentType(APPLICATION_JSON_VALUE);
@@ -219,6 +241,13 @@ public class UserService {
             try {
                 email = jsonNode.get("kakao_account").get("email").asText();
             }
+            catch(NullPointerException ne){
+                response.setContentType(APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding("utf-8");
+                ErrorResponse errorResponse = new ErrorResponse(400, "SNS 액세스 토큰이 잘못되었습니다.");
+                new ObjectMapper().writeValue(response.getWriter(), errorResponse);
+                return ResponseEntity.badRequest().build();
+            }
             catch (Exception e){
                 response.setContentType(APPLICATION_JSON_VALUE);
                 response.setCharacterEncoding("utf-8");
@@ -236,35 +265,37 @@ public class UserService {
         }
         //------------------------------------------------------------------//
 
+        Optional<User> user = userRepository.findByEmail(email);
+        Map<String, Object> result = new HashMap<>();
+        System.out.println(user);
+
+        if (user.isPresent()) {
+            log.info("user Empty rubnning -------------");
+            log.info("user = {}", user.toString());
+            Map<String, Object> data = new HashMap<>();
+            data.put("email", user.get().getEmail());
+            data.put("nickname", user.get().getNickname());
+            data.put("birthDate", user.get().getBirthDate());
+            data.put("result", true);
+
+            result.put("data", data);
+        } else {
+            log.info("user not Exist");
+            //{ code: "USER-NOT-EXIST, message: ~~~, result: false }
+            result.put("code", "USER-NOT-EXIST");
+            result.put("message", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
+            result.put("result", false);
+        }
         String accessToken = jwtService.createAccessToken();
         String refreshToken = jwtService.createRefreshToken();
 
         jwtService.setAccessTokenHeader(response, accessToken);
         jwtService.setRefreshTokenHeader(response, refreshToken);
 
-        Optional<User> user = userRepository.findByEmail(email);
-        Map<String, Object> result = new HashMap<>();
-        System.out.println(user);
-
-        if (!user.equals(Optional.empty())) {
-            Map<String, Object> data = new HashMap<>();
-            data.put("email", user.get().getEmail());
-            data.put("nickname", user.get().getNickname());
-            data.put("birthDate", user.get().getBirthDate());
-
-            result.put("data", data);
-            return ResponseEntity.ok().body(result);
-        } else {
-            result.put("code", 200);
-            result.put("message", "해당 정보가 존재하지 않습니다. 회원가입을 진행합니다.");
-            return ResponseEntity.ok().body(result);
-        }
-
-
+        return ResponseEntity.ok().body(result);
 
 
     }
-
     public static String getBody(String apiURL, Map<String, String> requestHeaders){
         HttpURLConnection con = connect(apiURL);
         try{

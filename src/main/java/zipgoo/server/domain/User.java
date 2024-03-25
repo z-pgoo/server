@@ -1,8 +1,9 @@
 package zipgoo.server.domain;
 
 import lombok.*;
+import zipgoo.server.domain.type.Role;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Getter
 @Setter
@@ -13,7 +14,8 @@ import javax.persistence.*;
 @AllArgsConstructor
 public class User {
     @Id
-    @Column(name = "user_id", columnDefinition = "BIGINT AUTO_INCREMENT")
+    @Column(name = "user_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private String email;
     private String password;
