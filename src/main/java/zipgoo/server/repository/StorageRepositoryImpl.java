@@ -23,6 +23,7 @@ public class StorageRepositoryImpl implements StorageRepository {
     private final AmazonS3 s3Client;
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
+
     @Override
     public String upload(MultipartFile multipartFiles){
         String fileName = generateFileName();

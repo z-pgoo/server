@@ -2,6 +2,7 @@ package zipgoo.server.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpHeaders;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,7 +23,9 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 public class ReviewController {
+    @Autowired
     private final ReviewFacadeService reviewFacadeService;
+    @Autowired
     private final ResponseService responseService;
     @PostMapping("/create/review")
     public CommonResponse<Long> create(@RequestPart("review") ReviewDto review,
